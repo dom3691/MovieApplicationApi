@@ -11,6 +11,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IOmdService, OmdbService>();
+builder.Services.AddSingleton<IMovieCrudService, MovieCrudService>();
 
 var app = builder.Build();
 
