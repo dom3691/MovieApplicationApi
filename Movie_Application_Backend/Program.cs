@@ -1,20 +1,28 @@
+using Microsoft.EntityFrameworkCore;
+using Movie_Application_Backend.Data;
 using Movie_Application_Backend.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Host.UseSerilog((context, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console());
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IOmdService, OmdbService>();
+builder.Services.AddScoped<IMovieCrudService, MovieCrudService>();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -22,7 +30,6 @@ if (app.Environment.IsDevelopment())
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Movie_Application-v1");
         c.RoutePrefix = "Swagger";
-
     });
 }
 
@@ -36,7 +43,5 @@ app.UseCors(options =>
 });
 
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
