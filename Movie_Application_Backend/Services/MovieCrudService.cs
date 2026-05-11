@@ -1,86 +1,61 @@
-using Microsoft.EntityFrameworkCore;
-using Movie_Application_Backend.Data;
 using Movie_Application_Backend.Models;
 
 namespace Movie_Application_Backend.Services;
 
 public class MovieCrudService : IMovieCrudService
 {
-    private readonly AppDbContext _dbContext;
-    private readonly ILogger<MovieCrudService> _logger;
+    private readonly List<MovieItem> _movies = new();
+    private int _nextId = 1;
 
-    public MovieCrudService(AppDbContext dbContext, ILogger<MovieCrudService> logger)
+    public IEnumerable<MovieItem> GetAll()
     {
-        _dbContext = dbContext;
-        _logger = logger;
+        return _movies;
     }
 
-    public async Task<IReadOnlyList<MovieItem>> GetAllAsync(CancellationToken cancellationToken = default)
+    public MovieItem? GetById(int id)
     {
-        return await _dbContext.Movies
-            .AsNoTracking()
-            .OrderByDescending(x => x.CreatedUtc)
-            .ToListAsync(cancellationToken);
+        return _movies.FirstOrDefault(m => m.Id == id);
     }
 
-    public async Task<MovieItem?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await _dbContext.Movies
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-    }
-
-    public async Task<MovieItem> CreateAsync(CreateMovieRequest request, CancellationToken cancellationToken = default)
+    public MovieItem Create(CreateMovieRequest request)
     {
         var movie = new MovieItem
         {
-            Title = request.Title.Trim(),
-            Genre = request.Genre.Trim(),
+            Id = _nextId++,
+            Title = request.Title,
+            Genre = request.Genre,
             ReleaseYear = request.ReleaseYear,
-            Rating = request.Rating,
-            CreatedUtc = DateTime.UtcNow,
-            UpdatedUtc = DateTime.UtcNow
+            Rating = request.Rating
         };
 
-        _dbContext.Movies.Add(movie);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation("Movie created. MovieId: {MovieId}, Title: {Title}", movie.Id, movie.Title);
+        _movies.Add(movie);
         return movie;
     }
 
-    public async Task<bool> UpdateAsync(int id, CreateMovieRequest request, CancellationToken cancellationToken = default)
+    public bool Update(int id, CreateMovieRequest request)
     {
-        var movie = await _dbContext.Movies.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var movie = GetById(id);
         if (movie is null)
         {
             return false;
         }
 
-        movie.Title = request.Title.Trim();
-        movie.Genre = request.Genre.Trim();
+        movie.Title = request.Title;
+        movie.Genre = request.Genre;
         movie.ReleaseYear = request.ReleaseYear;
         movie.Rating = request.Rating;
-        movie.UpdatedUtc = DateTime.UtcNow;
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Movie updated. MovieId: {MovieId}", id);
-
         return true;
     }
 
-    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
+    public bool Delete(int id)
     {
-        var movie = await _dbContext.Movies.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var movie = GetById(id);
         if (movie is null)
         {
             return false;
         }
 
-        _dbContext.Movies.Remove(movie);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Movie deleted. MovieId: {MovieId}", id);
-
+        _movies.Remove(movie);
         return true;
     }
 }

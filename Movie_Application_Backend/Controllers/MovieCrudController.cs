@@ -9,28 +9,24 @@ namespace Movie_Application_Backend.Controllers;
 public class MovieCrudController : ControllerBase
 {
     private readonly IMovieCrudService _movieCrudService;
-    private readonly ILogger<MovieCrudController> _logger;
 
-    public MovieCrudController(IMovieCrudService movieCrudService, ILogger<MovieCrudController> logger)
+    public MovieCrudController(IMovieCrudService movieCrudService)
     {
         _movieCrudService = movieCrudService;
-        _logger = logger;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public IActionResult GetAll()
     {
-        var movies = await _movieCrudService.GetAllAsync(cancellationToken);
-        return Ok(movies);
+        return Ok(_movieCrudService.GetAll());
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
+    public IActionResult GetById(int id)
     {
-        var movie = await _movieCrudService.GetByIdAsync(id, cancellationToken);
+        var movie = _movieCrudService.GetById(id);
         if (movie is null)
         {
-            _logger.LogWarning("Movie not found. MovieId: {MovieId}", id);
             return NotFound($"Movie with ID {id} was not found.");
         }
 
@@ -38,19 +34,18 @@ public class MovieCrudController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateMovieRequest request, CancellationToken cancellationToken)
+    public IActionResult Create([FromBody] CreateMovieRequest request)
     {
-        var movie = await _movieCrudService.CreateAsync(request, cancellationToken);
+        var movie = _movieCrudService.Create(request);
         return CreatedAtAction(nameof(GetById), new { id = movie.Id }, movie);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] CreateMovieRequest request, CancellationToken cancellationToken)
+z    public IActionResult Update(int id, [FromBody] CreateMovieRequest request)
     {
-        var updated = await _movieCrudService.UpdateAsync(id, request, cancellationToken);
+        var updated = _movieCrudService.Update(id, request);
         if (!updated)
         {
-            _logger.LogWarning("Movie update skipped. Movie not found. MovieId: {MovieId}", id);
             return NotFound($"Movie with ID {id} was not found.");
         }
 
@@ -58,12 +53,11 @@ public class MovieCrudController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    public IActionResult Delete(int id)
     {
-        var deleted = await _movieCrudService.DeleteAsync(id, cancellationToken);
+        var deleted = _movieCrudService.Delete(id);
         if (!deleted)
         {
-            _logger.LogWarning("Movie delete skipped. Movie not found. MovieId: {MovieId}", id);
             return NotFound($"Movie with ID {id} was not found.");
         }
 
