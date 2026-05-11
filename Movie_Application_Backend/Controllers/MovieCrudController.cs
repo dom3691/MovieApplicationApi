@@ -41,7 +41,7 @@ public class MovieCrudController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public IActionResult Update(int id, [FromBody] CreateMovieRequest request)
+z    public IActionResult Update(int id, [FromBody] CreateMovieRequest request)
     {
         var updated = _movieCrudService.Update(id, request);
         if (!updated)
